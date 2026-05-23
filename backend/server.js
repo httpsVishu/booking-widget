@@ -9,7 +9,9 @@ import slotsRoutes from './routes/slots.routes.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: '*'
+}));
 app.use(express.json());
 
 app.get('/', (_, res) => res.json({ ok: true, message: 'backend alive' }));
