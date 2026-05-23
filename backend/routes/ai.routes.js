@@ -4,13 +4,11 @@ import { readStore, writeStore } from '../services/jsonStore.js';
 
 const router = Router();
 
-// GET presets
 router.get('/presets', (req, res) => {
   const presets = readStore('presets');
   res.json(presets);
 });
 
-// POST extract schema from prompt
 router.post('/extract', async (req, res) => {
   try {
     const { prompt } = req.body;

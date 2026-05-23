@@ -18,7 +18,6 @@ export function SlotPicker({ service, onSelect, onBack }) {
   subtext.textContent = `Service: ${service.name} · ${service.duration} min`;
   container.appendChild(subtext);
 
-  // Date grid
   const dateSection = document.createElement('div');
   dateSection.className = 'space-y-2';
 
@@ -32,7 +31,6 @@ export function SlotPicker({ service, onSelect, onBack }) {
   dateSection.appendChild(dateGrid);
   container.appendChild(dateSection);
 
-  // Slot grid
   const slotSection = document.createElement('div');
   slotSection.className = 'space-y-2 hidden';
 
@@ -45,14 +43,12 @@ export function SlotPicker({ service, onSelect, onBack }) {
   slotSection.appendChild(slotGrid);
   container.appendChild(slotSection);
 
-  // Back button
   const backBtn = document.createElement('button');
   backBtn.className = 'text-sm text-neutral-500 hover:text-neutral-300 transition-colors mt-2 cursor-pointer';
   backBtn.textContent = '← Back to services';
   backBtn.addEventListener('click', onBack);
   container.appendChild(backBtn);
 
-  // Load dates
   const now = new Date();
   loadDates(now.getFullYear(), now.getMonth() + 1);
 

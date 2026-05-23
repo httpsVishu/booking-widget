@@ -7,7 +7,6 @@ export function CustomerForm({ service, date, slot, onSubmit, onBack }) {
   const container = document.createElement('div');
   container.className = 'space-y-6';
 
-  // Summary
   const summary = document.createElement('div');
   summary.className = 'bg-violet-950/40 border border-violet-800/50 rounded-2xl p-4 space-y-1';
   summary.innerHTML = `
@@ -24,7 +23,6 @@ export function CustomerForm({ service, date, slot, onSubmit, onBack }) {
   heading.textContent = 'Your Details';
   container.appendChild(heading);
 
-  // Form fields
   const fields = [
     { id: 'name', label: 'Full Name', placeholder: 'Jane Smith', type: 'text' },
     { id: 'email', label: 'Email', placeholder: 'jane@example.com', type: 'email' },
@@ -60,7 +58,6 @@ export function CustomerForm({ service, date, slot, onSubmit, onBack }) {
     errorEls[f.id] = errEl;
   });
 
-  // Stripe mock
   if (service.deposit > 0) {
     const stripeBox = document.createElement('div');
     stripeBox.className = 'border border-neutral-700 rounded-2xl p-4 space-y-3';
@@ -81,7 +78,6 @@ export function CustomerForm({ service, date, slot, onSubmit, onBack }) {
     container.appendChild(stripeBox);
   }
 
-  // Actions
   const actions = document.createElement('div');
   actions.className = 'flex gap-3';
 

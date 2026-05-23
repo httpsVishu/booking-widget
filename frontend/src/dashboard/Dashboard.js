@@ -8,7 +8,6 @@ export function Dashboard({ business }) {
   const container = document.createElement('div');
   container.className = 'space-y-6';
 
-  // Header
   const header = document.createElement('div');
   header.className = 'flex items-center justify-between';
   header.innerHTML = `
@@ -23,13 +22,11 @@ export function Dashboard({ business }) {
   `;
   container.appendChild(header);
 
-  // Stats row
   const statsRow = document.createElement('div');
   statsRow.className = 'grid grid-cols-3 gap-4';
   statsRow.id = 'dashboard-stats';
   container.appendChild(statsRow);
 
-  // Table section
   const tableCard = document.createElement('div');
   tableCard.className = 'bg-neutral-900 border border-neutral-800 rounded-2xl p-6';
 
@@ -56,7 +53,6 @@ export function Dashboard({ business }) {
     try {
       const bookings = await api.getBookings();
 
-      // Update stats
       const pending = bookings.filter(b => b.depositStatus === 'pending').length;
       const paid = bookings.filter(b => b.depositStatus === 'paid').length;
       const revenue = bookings
@@ -80,7 +76,42 @@ export function Dashboard({ business }) {
       });
 
       tableBody.innerHTML = '';
-      tableBody.appendChild(BookingTable({ bookings, onRefresh: loadBookings }));
+
+      if (bookings.length === 0) {
+        tableBody.innerHTML = `
+          <div class="text-center py-10 space-y-3">
+            <div class="text-4xl">📋</div>
+            <p class="text-neutral-300 font-medium">No bookings yet</p>
+            <p class="text-sm text-neutral-500 max-w-sm mx-auto">
+              This is the <span class="text-violet-400 font-medium">owner's live view</span>. 
+              Once customers book through the <strong class="text-neutral-300">Book</strong> tab, 
+              their appointments will appear here automatically.
+            </p>
+            <div class="mt-6 border border-neutral-800 rounded-xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-neutral-800 bg-neutral-900/50">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Customer</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Service</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Date & Time</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Deposit</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-neutral-600 text-sm italic">
+                      Bookings will appear here in real time
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      } else {
+        tableBody.appendChild(BookingTable({ bookings, onRefresh: loadBookings }));
+      }
       fadeIn(tableBody);
     } catch (e) {
       toast(e.message, 'error');
@@ -90,10 +121,8 @@ export function Dashboard({ business }) {
 
   loadBookings();
 
-  // Auto-refresh every 5 seconds
   const interval = setInterval(loadBookings, 5000);
 
-  // Cleanup on remove
   const observer = new MutationObserver(() => {
     if (!document.contains(container)) {
       clearInterval(interval);

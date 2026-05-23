@@ -1,32 +1,137 @@
-import OpenAI from 'openai';
-
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const SYSTEM_PROMPT = `You are a booking system configurator. 
-Given a business description, extract a structured schema for their booking system.
-Return ONLY valid JSON matching this exact shape:
-{
-  "businessName": "string",
-  "services": [
-    { "id": "string (slug)", "name": "string", "duration": number (minutes), "deposit": number (USD) }
-  ],
-  "workingDays": ["Monday"|"Tuesday"|"Wednesday"|"Thursday"|"Friday"|"Saturday"|"Sunday"],
-  "workingHours": { "start": "HH:MM", "end": "HH:MM" },
-  "slotInterval": number (minutes, typically matches shortest service duration)
+function slugify(str) {
+  return str.toLowerCase().replace(/\s+/g, '-');
 }
-Extract 3-6 services. Be realistic about durations and deposit amounts based on industry norms.`;
 
 export async function extractSchema(prompt) {
-  const response = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.3,
-    response_format: { type: 'json_object' }
-  });
+  const lower = prompt.toLowerCase();
 
-  const content = response.choices[0].message.content;
-  return JSON.parse(content);
+  let businessName = 'Custom Business';
+  let services = [];
+  let workingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  let workingHours = { start: '09:00', end: '18:00' };
+  let slotInterval = 30;
+
+  if (lower.includes('hvac')) {
+    businessName = 'Cool Breeze HVAC';
+
+    services = [
+      {
+        id: 'ac-repair',
+        name: 'AC Repair',
+        duration: 120,
+        deposit: 75
+      },
+      {
+        id: 'duct-cleaning',
+        name: 'Duct Cleaning',
+        duration: 180,
+        deposit: 100
+      },
+      {
+        id: 'maintenance',
+        name: 'HVAC Maintenance',
+        duration: 90,
+        deposit: 50
+      }
+    ];
+
+    slotInterval = 30;
+  }
+
+  else if (
+    lower.includes('spa') ||
+    lower.includes('massage')
+  ) {
+    businessName = 'Luxury Spa Studio';
+
+    services = [
+      {
+        id: 'spa-session',
+        name: 'Spa Session',
+        duration: 30,
+        deposit: 200
+      },
+      {
+        id: 'full-body-massage',
+        name: 'Full Body Massage',
+        duration: 60,
+        deposit: 500
+      },
+      {
+        id: 'facial-treatment',
+        name: 'Facial Treatment',
+        duration: 45,
+        deposit: 300
+      }
+    ];
+
+    workingDays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday'
+    ];
+
+    workingHours = {
+      start: '10:00',
+      end: '20:00'
+    };
+
+    slotInterval = 30;
+  }
+
+  else if (lower.includes('barber')) {
+    businessName = 'Sharp Edge Barber';
+
+    services = [
+      {
+        id: 'haircut',
+        name: 'Haircut',
+        duration: 30,
+        deposit: 50
+      },
+      {
+        id: 'beard-trim',
+        name: 'Beard Trim',
+        duration: 20,
+        deposit: 20
+      }
+    ];
+
+    workingDays = [
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
+  }
+
+  else {
+    services = [
+      {
+        id: slugify('Consultation'),
+        name: 'Consultation',
+        duration: 30,
+        deposit: 50
+      },
+      {
+        id: slugify('Main Service'),
+        name: 'Main Service',
+        duration: 60,
+        deposit: 100
+      }
+    ];
+  }
+
+  return {
+    businessName,
+    services,
+    workingDays,
+    workingHours,
+    slotInterval
+  };
 }

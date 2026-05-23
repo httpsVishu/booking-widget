@@ -36,7 +36,6 @@ export function BookingTable({ bookings, onRefresh }) {
   const tbody = document.createElement('tbody');
   tbody.className = 'divide-y divide-neutral-800/50';
 
-  // Sort newest first
   const sorted = [...bookings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   sorted.forEach(booking => {

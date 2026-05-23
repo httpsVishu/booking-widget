@@ -22,14 +22,23 @@ const TAB_INACTIVE = 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-8
 
 let isRendering = false;
 
-function renderNav(business) {
+async function loadBusiness() {
+  try {
+    const b = await api.getBusiness();
+    const state = getState();
+    state.business = b; // mutate the internal ref quietly
+    return b;
+  } catch {
+    return getState().business || null;
+  }
+}
+
+function renderNav(business, currentView) {
   const nav = document.createElement('nav');
-  nav.className =
-    'border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-sm sticky top-0 z-40';
+  nav.className = 'border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-sm sticky top-0 z-40';
 
   const inner = document.createElement('div');
-  inner.className =
-    'max-w-5xl mx-auto px-4 py-3 flex items-center justify-between';
+  inner.className = 'max-w-5xl mx-auto px-4 py-3 flex items-center justify-between';
 
   const logo = document.createElement('div');
   logo.className = 'flex items-center gap-2';
@@ -41,37 +50,28 @@ function renderNav(business) {
   const tabs = document.createElement('div');
   tabs.className = 'flex items-center gap-1 bg-neutral-900 rounded-xl p-1';
 
-  const { view } = getState();
-
   const navItems = [
-    { id: 'setup', label: '⚙️ Setup' },
-    { id: 'booking', label: '📅 Book', disabled: !business },
+    { id: 'setup',     label: '⚙️ Setup' },
+    { id: 'booking',   label: '📅 Book',      disabled: !business },
     { id: 'dashboard', label: '📊 Dashboard', disabled: !business }
   ];
 
-  navItems.forEach((item) => {
+  navItems.forEach(item => {
     const btn = document.createElement('button');
-
-    btn.className = `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-      item.id === view ? TAB_ACTIVE : TAB_INACTIVE
-    } ${item.disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`;
-
+    btn.className = `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+      ${item.id === currentView ? TAB_ACTIVE : TAB_INACTIVE}
+      ${item.disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`;
     btn.textContent = item.label;
     btn.disabled = Boolean(item.disabled);
-
     btn.addEventListener('click', () => {
-      if (!item.disabled) {
-        setState({ view: item.id });
-      }
+      if (!item.disabled) setState({ view: item.id });
     });
-
     tabs.appendChild(btn);
   });
 
   inner.appendChild(logo);
   inner.appendChild(tabs);
   nav.appendChild(inner);
-
   return nav;
 }
 
@@ -85,21 +85,12 @@ async function renderSetup() {
     <h1 class="text-4xl font-bold text-neutral-100">
       Configure Your <span class="text-violet-400">Booking System</span>
     </h1>
-    <p class="text-neutral-500">
-      Choose a preset or describe your business — AI does the rest.
-    </p>
+    <p class="text-neutral-500">Choose a preset or describe your business — AI does the rest.</p>
   `;
   container.appendChild(hero);
 
-  let existingBusiness = getState().business;
-
-  if (!existingBusiness) {
-    try {
-      existingBusiness = await api.getBusiness();
-    } catch {
-      existingBusiness = null;
-    }
-  }
+  let existingBusiness = null;
+  try { existingBusiness = await api.getBusiness(); } catch { }
 
   const schemaEditorSection = document.createElement('div');
   schemaEditorSection.className = `${CARD_CLASS} space-y-6 hidden`;
@@ -111,60 +102,43 @@ async function renderSetup() {
     const heading = document.createElement('h2');
     heading.className = 'text-lg font-bold text-neutral-100';
     heading.textContent = 'Edit Your Schema';
-
     schemaEditorSection.appendChild(heading);
 
-    schemaEditorSection.appendChild(
-      SchemaEditor({
-        schema,
-        onSaved: (saved) => {
-          setState({ business: saved, view: 'booking' });
-          toast(`${saved.businessName} is ready!`, 'success');
-        }
-      })
-    );
+    schemaEditorSection.appendChild(SchemaEditor({
+      schema,
+      onSaved: (saved) => {
+        const s = getState();
+        s.business = saved;
+        setState({ view: 'booking' });
+        toast(`${saved.businessName} is ready!`, 'success');
+      }
+    }));
 
     fadeIn(schemaEditorSection);
   }
 
   if (existingBusiness?.businessName) {
-    const existing = document.createElement('div');
-    existing.className =
-      'bg-emerald-950/40 border border-emerald-800/50 rounded-2xl p-4 flex items-center justify-between';
-
-    existing.innerHTML = `
+    const banner = document.createElement('div');
+    banner.className = 'bg-emerald-950/40 border border-emerald-800/50 rounded-2xl p-4 flex items-center justify-between';
+    banner.innerHTML = `
       <div>
-        <p class="text-sm font-semibold text-emerald-300">
-          Active: ${existingBusiness.businessName}
-        </p>
+        <p class="text-sm font-semibold text-emerald-300">Active: ${existingBusiness.businessName}</p>
         <p class="text-xs text-neutral-500">
-          ${existingBusiness.services?.length || 0} services · 
-          ${existingBusiness.workingDays?.join(', ') || 'No working days'}
+          ${existingBusiness.services?.length || 0} services · ${existingBusiness.workingDays?.join(', ') || ''}
         </p>
       </div>
     `;
-
     const editBtn = document.createElement('button');
-    editBtn.className =
-      'text-xs text-emerald-400 hover:text-emerald-300 cursor-pointer font-medium';
+    editBtn.className = 'text-xs text-emerald-400 hover:text-emerald-300 cursor-pointer font-medium';
     editBtn.textContent = 'Edit Schema';
-
-    editBtn.addEventListener('click', () => {
-      showSchemaEditor(existingBusiness);
-    });
-
-    existing.appendChild(editBtn);
-    container.appendChild(existing);
+    editBtn.addEventListener('click', () => showSchemaEditor(existingBusiness));
+    banner.appendChild(editBtn);
+    container.appendChild(banner);
   }
 
   const presetsSection = document.createElement('div');
   presetsSection.className = 'space-y-4';
-  presetsSection.innerHTML = `
-    <h2 class="text-sm font-semibold text-neutral-400 uppercase tracking-wider">
-      Quick Presets
-    </h2>
-  `;
-
+  presetsSection.innerHTML = `<h2 class="text-sm font-semibold text-neutral-400 uppercase tracking-wider">Quick Presets</h2>`;
   const presetsGrid = document.createElement('div');
   presetsSection.appendChild(presetsGrid);
   container.appendChild(presetsSection);
@@ -185,14 +159,13 @@ async function renderSetup() {
     loaderSection.innerHTML = '';
     loaderSection.classList.remove('hidden');
     loaderSection.appendChild(Loader({ message: 'Extracting schema with AI...' }));
-
     try {
       const schema = await api.extractSchema(prompt);
       loaderSection.classList.add('hidden');
       showSchemaEditor(schema);
-    } catch (error) {
+    } catch (e) {
       loaderSection.classList.add('hidden');
-      toast(error.message || 'Failed to extract schema', 'error');
+      toast(e.message || 'Failed to extract schema', 'error');
     }
   }
 
@@ -203,20 +176,15 @@ async function renderSetup() {
 
   try {
     const presets = await api.getPresets();
-
-    presetsGrid.appendChild(
-      PresetCards({
-        presets,
-        onSelect: (description) => {
-          promptInput.setValue(description);
-          handleExtract(description);
-        }
-      })
-    );
+    presetsGrid.appendChild(PresetCards({
+      presets,
+      onSelect: (description) => {
+        promptInput.setValue(description);
+        handleExtract(description);
+      }
+    }));
   } catch {
-    presetsGrid.innerHTML = `
-      <p class="text-sm text-neutral-500">Could not load presets.</p>
-    `;
+    presetsGrid.innerHTML = `<p class="text-sm text-neutral-500">Could not load presets.</p>`;
   }
 
   fadeIn(container);
@@ -230,55 +198,47 @@ async function render() {
   try {
     app.innerHTML = '';
 
-    const state = getState();
-    let currentBusiness = state.business;
+    const { view } = getState();
 
-    if (!currentBusiness) {
-      try {
-        currentBusiness = await api.getBusiness();
-      } catch {
-        currentBusiness = null;
-      }
+    // Always fetch fresh business from disk — but don't call setState so we don't loop
+    let currentBusiness = null;
+    try {
+      currentBusiness = await api.getBusiness();
+      // Silently sync into state without triggering subscribers
+      getState().business = currentBusiness;
+    } catch {
+      currentBusiness = getState().business || null;
     }
 
-    const nav = renderNav(currentBusiness);
-    app.appendChild(nav);
+    app.appendChild(renderNav(currentBusiness, view));
 
     const main = document.createElement('main');
     main.className = 'max-w-5xl mx-auto px-4 py-8';
     app.appendChild(main);
 
-    if (state.view === 'setup') {
+    if (view === 'setup') {
       main.appendChild(await renderSetup());
-      return;
-    }
 
-    if (state.view === 'booking') {
-      if (!currentBusiness) {
-        setState({ view: 'setup' });
-        return;
-      }
-
+    } else if (view === 'booking') {
+      if (!currentBusiness) { setState({ view: 'setup' }); return; }
       main.appendChild(BookingWidget({ business: currentBusiness }));
-      return;
-    }
 
-    if (state.view === 'dashboard') {
-      if (!currentBusiness) {
-        setState({ view: 'setup' });
-        return;
-      }
-
+    } else if (view === 'dashboard') {
+      if (!currentBusiness) { setState({ view: 'setup' }); return; }
       main.appendChild(Dashboard({ business: currentBusiness }));
-      return;
     }
+
   } finally {
     isRendering = false;
   }
 }
 
-subscribe(() => {
-  render();
+let lastView = null;
+subscribe((state) => {
+  if (state.view !== lastView) {
+    lastView = state.view;
+    render();
+  }
 });
 
 render();

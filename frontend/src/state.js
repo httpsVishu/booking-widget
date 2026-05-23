@@ -1,4 +1,3 @@
-// Central reactive state
 const state = {
   business: null,
   view: 'setup', // 'setup' | 'booking' | 'dashboard'

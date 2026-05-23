@@ -101,49 +101,59 @@ export function SchemaEditor({ schema, onSaved }) {
 
     fadeIn(container);
   }
-
-  function serviceRow(svc, idx) {
+  
+function serviceRow(svc, idx) {
     const row = document.createElement('div');
-    row.className = 'grid grid-cols-12 gap-2 items-center mb-2';
+    row.className = 'grid grid-cols-12 gap-2 items-start mb-3';
 
+    // Service name cell
+    const nameWrapper = document.createElement('div');
+    nameWrapper.className = 'col-span-5 flex flex-col gap-1';
+    const nameLabel = document.createElement('span');
+    nameLabel.className = 'text-xs text-neutral-500';
+    nameLabel.textContent = 'Service name';
     const nameEl = input(svc.name, (v) => { local.services[idx].name = v; });
-    nameEl.className += ' col-span-5';
-    nameEl.placeholder = 'Service name';
+    nameEl.placeholder = 'e.g. Haircut';
+    nameWrapper.appendChild(nameLabel);
+    nameWrapper.appendChild(nameEl);
 
+    // Duration cell
+    const durWrapper = document.createElement('div');
+    durWrapper.className = 'col-span-3 flex flex-col gap-1';
+    const durLabel = document.createElement('span');
+    durLabel.className = 'text-xs text-neutral-500';
+    durLabel.textContent = '⏱ Minutes';
     const durEl = numberInput(svc.duration, (v) => { local.services[idx].duration = v; });
-    durEl.className += ' col-span-3';
+    durEl.placeholder = '60';
+    durWrapper.appendChild(durLabel);
+    durWrapper.appendChild(durEl);
 
+    // Deposit cell
+    const depWrapper = document.createElement('div');
+    depWrapper.className = 'col-span-3 flex flex-col gap-1';
+    const depLabel = document.createElement('span');
+    depLabel.className = 'text-xs text-neutral-500';
+    depLabel.textContent = '💳 Deposit ($)';
     const depEl = numberInput(svc.deposit, (v) => { local.services[idx].deposit = v; });
-    depEl.className += ' col-span-3';
+    depEl.placeholder = '0';
+    depWrapper.appendChild(depLabel);
+    depWrapper.appendChild(depEl);
 
+    // Delete button
     const delBtn = document.createElement('button');
-    delBtn.className = 'col-span-1 text-neutral-600 hover:text-red-400 transition-colors text-lg cursor-pointer';
+    delBtn.className = 'col-span-1 mt-6 text-neutral-600 hover:text-red-400 transition-colors text-lg cursor-pointer self-center';
     delBtn.textContent = '×';
     delBtn.addEventListener('click', () => {
       local.services.splice(idx, 1);
       render();
     });
 
-    // Labels on first row
-    if (idx === 0) {
-      const header = document.createElement('div');
-      header.className = 'grid grid-cols-12 gap-2 mb-1';
-      header.innerHTML = `
-        <span class="col-span-5 text-xs text-neutral-500">Service</span>
-        <span class="col-span-3 text-xs text-neutral-500">Mins</span>
-        <span class="col-span-3 text-xs text-neutral-500">Deposit $</span>
-        <span class="col-span-1"></span>
-      `;
-      row.before(header);
-    }
-
-    row.appendChild(nameEl);
-    row.appendChild(durEl);
-    row.appendChild(depEl);
+    row.appendChild(nameWrapper);
+    row.appendChild(durWrapper);
+    row.appendChild(depWrapper);
     row.appendChild(delBtn);
     return row;
   }
-
   function section(title) {
     const el = document.createElement('div');
     el.className = 'space-y-3';
