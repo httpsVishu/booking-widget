@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_URL || 'https://booking-widget-0nhi.onrender.com';
+const BASE = 'https://booking-widget-0nhi.onrender.com';
 
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
